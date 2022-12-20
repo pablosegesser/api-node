@@ -8,8 +8,8 @@
         "url": "https://github.com/cornflourblue/node-mongo-signup-verification-api.git"
     },
     "scripts": {
-        "start": "tsc && node ./server.ts",
-        "start:dev": "tsc && nodemon ./server.ts"
+        "start": "node ./server.js",
+        "start:dev": "nodemon ./server.js"
     },
     "dependencies": {
         "@types/express": "^4.17.15",
