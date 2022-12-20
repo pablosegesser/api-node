@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const schema = new Schema({
     account: { type: Schema.Types.ObjectId, ref: 'Account' },
     token: String,
-    expires: Date,
+    refreshToken: String,
     created: { type: Date, default: Date.now },
     createdByIp: String,
     revoked: Date,

@@ -37,7 +37,7 @@ async function authenticate({ email, password, ipAddress }) {
 
     if(loginCommon.status !== 400){
        // console.log(loginCommon.token)
-        const tokenMIA = generateTokenMIA(account, ipAddress, loginCommon.token);
+        const tokenMIA = generateTokenMIA(account, ipAddress, loginCommon.token, loginCommon.refreshToken);
         //save on database
         await tokenMIA.save();
     }
@@ -99,7 +99,8 @@ const loginMia = async(loginMiacreds)=>{
           //  console.log('login in MIA successfully');
             return {
                 status: 200,
-                token: resp.data.access_token
+                token: resp.data.access_token,
+                refreshToken: resp.data.refresh_token
             }
           }
         
@@ -310,12 +311,12 @@ function generateRefreshToken(account, ipAddress) {
     });
 }
 
-function generateTokenMIA(account, ipAddress, token) {
+function generateTokenMIA(account, ipAddress, token, refreshToken) {
     // save MIA token on database
     return new db.TokenMIA({
         account: account.id,
         token: token,
-        expires: new Date(Date.now() + 7*24*60*60*1000),
+        refreshToken: refreshToken,
         createdByIp: ipAddress
     });
 }
