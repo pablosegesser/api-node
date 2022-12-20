@@ -5,6 +5,9 @@ const crypto = require("crypto");
 const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
+const axios = require('axios');
+const base64 = require('base-64');
+const FormData = require('form-data');
 
 module.exports = {
     authenticate,
@@ -25,9 +28,19 @@ module.exports = {
 async function authenticate({ email, password, ipAddress }) {
     const account = await db.Account.findOne({ email });
  //  console.log(account)
+ // with verification
    {/* if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
         throw 'Email or password is incorrect';
     }*/}
+
+    const loginCommon = await loginMia({numero: process.env.USERMIA, pass: process.env.PASSMIA});
+
+    if(loginCommon.status !== 400){
+       // console.log(loginCommon.token)
+        const tokenMIA = generateTokenMIA(account, ipAddress, loginCommon.token);
+        //save on database
+        await tokenMIA.save();
+    }
 
     if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
         throw 'Email or password is incorrect';
@@ -46,6 +59,59 @@ async function authenticate({ email, password, ipAddress }) {
         jwtToken,
         refreshToken: refreshToken.token
     };
+}
+// transform object in a formData
+const toFormData = (data) => {
+    const formData = new FormData();
+  
+    if (data.image === '') {
+      delete data.image;
+    }
+  
+    Object.keys(data).forEach(key => {
+      // if is array then we need to loop through the array and add each item to the form data
+      if (Array.isArray(data[key])) {
+        data[key].forEach((item) => {
+          formData.append(`${key}[]`, item);
+        });
+      } else {
+        formData.append(key, data[key]);
+      }
+    });
+  //  console.log('formdata', formData);
+    return formData;
+  };
+
+  //login in MIA plataform
+const loginMia = async(loginMiacreds)=>{
+
+    try {
+        const resp = await axios({url:`${process.env.API_URLMIA}/oauth/token`, data: toFormData({
+            username: loginMiacreds.numero,
+            password: loginMiacreds.pass,
+            grant_type: 'password'
+        
+          }), headers:{
+                'Content-Type': 'multipart/form-data',
+                'Authorization':  `Basic ${base64.encode(process.env.BASIC_AUTH_USERNAME + ':' + process.env.BASIC_AUTH_PASSWORD)} `
+          }, method: 'POST'});
+          if(resp.status === 200){
+          //  console.log('login in MIA successfully');
+            return {
+                status: 200,
+                token: resp.data.access_token
+            }
+          }
+        
+    } catch (error) {
+        console.log('login MIA failed '+error)
+        return {
+            status: 400,
+            msg: 'Error login MIA'
+        }
+    }
+
+
 }
 
 async function refreshToken({ token, ipAddress }) {
@@ -244,13 +310,23 @@ function generateRefreshToken(account, ipAddress) {
     });
 }
 
+function generateTokenMIA(account, ipAddress, token) {
+    // save MIA token on database
+    return new db.TokenMIA({
+        account: account.id,
+        token: token,
+        expires: new Date(Date.now() + 7*24*60*60*1000),
+        createdByIp: ipAddress
+    });
+}
+
 function randomTokenString() {
     return crypto.randomBytes(40).toString('hex');
 }
 
 function basicDetails(account) {
-    const { id, title, firstName, lastName, email,genero, role, created, updated,dateOfBirth,representados, isVerified } = account;
-    return { id, title, firstName, lastName, email,genero, role, created,dateOfBirth,representados, updated, isVerified };
+    const { id, title, firstName, lastName, email,genero, role, created, updated,dateOfBirth, isVerified } = account;
+    return { id, title, firstName, lastName, email,genero, role, created,dateOfBirth, updated, isVerified };
 }
 
 async function sendVerificationEmail(account, origin) {

@@ -8,6 +8,7 @@ module.exports = {
     Account: require('accounts/account.model'),
     RefreshToken: require('accounts/refresh-token.model'),
     Campeonato: require('campeonato/campeonato.model'),
+    TokenMIA: require('accounts/token-mia.model'),
     isValidId
 };
 

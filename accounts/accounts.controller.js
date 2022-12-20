@@ -199,7 +199,9 @@ function updateSchema(req, res, next) {
         genero: Joi.string().empty(''),
         email: Joi.string().email().empty(''),
         password: Joi.string().min(6).empty(''),
-        confirmPassword: Joi.string().valid(Joi.ref('password')).empty('')
+        confirmPassword: Joi.string().valid(Joi.ref('password')).empty(''),
+        role: Joi.string().empty('')
+
     };
 
     // only admins can update role
