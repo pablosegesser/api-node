@@ -15,8 +15,9 @@ app.use(cookieParser());
 app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
 // api routes
-app.use('/accounts', require('./accounts/accounts.controller'));
-app.use('/movements', require('./movements/movements.controller'));
+app.use('/auth', require('./src/auth/auth.controller'));
+app.use('/movements', require('./src/movements/movements.controller'));
+app.use('/users', require('./src/users/users.controller'));
 
 // swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));

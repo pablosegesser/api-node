@@ -1,5 +1,5 @@
-const { sequelize } = require('../_helpers/db_oracle');
-const { getAllwithPagination} = require('../_helpers/utils');
+const { sequelize } = require('../../_helpers/db_oracle');
+const { getAllwithPagination} = require('../../_helpers/utils');
 
 
 

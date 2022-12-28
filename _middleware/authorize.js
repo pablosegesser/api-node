@@ -1,9 +1,6 @@
 const jwt = require('express-jwt');
 const { secret } = require('config.json');
-const db = require('_helpers/db');
 const { USERS } = require('../models/user/user.module');
-const { ROLES } = require('../models/auth/roles.model');
-const { ROLE } = require('../models/auth/role.model');
 const { getUserRole } = require('../_helpers/utils');
 
 module.exports = authorize;

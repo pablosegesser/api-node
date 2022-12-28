@@ -4,7 +4,7 @@ const Joi = require('joi');
 const validateRequest = require('_middleware/validate-request');
 const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role');
-const accountService = require('./account.service');
+const accountService = require('./auth.service');
 
 // routes
 
@@ -21,7 +21,6 @@ router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
-router.get('/movements/:id', authorize(), getMovementsByUserId);
 
 
 module.exports = router;
@@ -175,13 +174,6 @@ function getById(req, res, next) {
     accountService.getById(req.params.id)
         .then(account => account ? res.json(account) : res.sendStatus(404))
         .catch(next);
-}
-
-function getMovementsByUserId(req, res, next){
-    const {page,size, date_to, date_from, kind_id} = req.query;
-    accountService.getMovementsPerUser(req.params.id,page, size, date_to, date_from, kind_id)
-        .then(account => account ? res.json(account) : res.sendStatus(404))
-        .catch(next); 
 }
 
 function createSchema(req, res, next) {

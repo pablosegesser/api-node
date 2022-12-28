@@ -1,5 +1,5 @@
 const express = require('express');
-const authorize = require('../_middleware/authorize');
+const authorize = require('../../_middleware/authorize');
 const router = express.Router();
 const movementService = require('./movements.service');
 
