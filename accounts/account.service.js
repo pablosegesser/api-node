@@ -5,9 +5,12 @@ const crypto = require("crypto");
 const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
-const axios = require('axios');
-const base64 = require('base-64');
-const FormData = require('form-data');
+const { USERS } = require('../models/user/user.module');
+const { sequelize } = require('../_helpers/db_oracle');
+const { getAllwithPagination, getUserRole } = require('../_helpers/utils');
+const { QueryTypes } = require('sequelize');
+
+
 
 module.exports = {
     authenticate,
@@ -22,98 +25,39 @@ module.exports = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    getMovementsPerUser
 };
 
-async function authenticate({ email, password, ipAddress }) {
-    const account = await db.Account.findOne({ email });
- //  console.log(account)
+async function authenticate({ username, password, ipAddress }) {
+  
+  const accountMIA = await USERS.findOne({ raw:true, where: { USERNAME: username }, offset: false, limit: false});
+
  // with verification
    {/* if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
         throw 'Email or password is incorrect';
     }*/}
-
-    const loginCommon = await loginMia({numero: process.env.USERMIA, pass: process.env.PASSMIA});
-
-    if(loginCommon.status !== 400){
-       // console.log(loginCommon.token)
-        const tokenMIA = generateTokenMIA(account, ipAddress, loginCommon.token, loginCommon.refreshToken);
-        //save on database
-        await tokenMIA.save();
-    }
-
-    if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
+  
+    if (!accountMIA || !bcrypt.compareSync(password, accountMIA.PASSWORD)) {
         throw 'Email or password is incorrect';
     }
-
+    console.log(accountMIA.ID)
     // authentication successful so generate jwt and refresh tokens
-    const jwtToken = generateJwtToken(account);
-    const refreshToken = generateRefreshToken(account, ipAddress);
+    const jwtToken = generateJwtToken(accountMIA);
+  //  const refreshToken = generateRefreshToken(accountMIA.ID, ipAddress);
 
     // save refresh token
-    await refreshToken.save();
+  //  await refreshToken.save();
+
 
     // return basic details and tokens
     return {
-        ...basicDetails(account),
+        ...basicDetailsMIA(accountMIA),
         jwtToken,
-        refreshToken: refreshToken.token
+        refreshToken: refreshToken.token,
     };
 }
-// transform object in a formData
-const toFormData = (data) => {
-    const formData = new FormData();
-  
-    if (data.image === '') {
-      delete data.image;
-    }
-  
-    Object.keys(data).forEach(key => {
-      // if is array then we need to loop through the array and add each item to the form data
-      if (Array.isArray(data[key])) {
-        data[key].forEach((item) => {
-          formData.append(`${key}[]`, item);
-        });
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-  //  console.log('formdata', formData);
-    return formData;
-  };
 
-  //login in MIA plataform
-const loginMia = async(loginMiacreds)=>{
-
-    try {
-        const resp = await axios({url:`${process.env.API_URLMIA}/oauth/token`, data: toFormData({
-            username: loginMiacreds.numero,
-            password: loginMiacreds.pass,
-            grant_type: 'password'
-        
-          }), headers:{
-                'Content-Type': 'multipart/form-data',
-                'Authorization':  `Basic ${base64.encode(process.env.BASIC_AUTH_USERNAME + ':' + process.env.BASIC_AUTH_PASSWORD)} `
-          }, method: 'POST'});
-          if(resp.status === 200){
-          //  console.log('login in MIA successfully');
-            return {
-                status: 200,
-                token: resp.data.access_token,
-                refreshToken: resp.data.refresh_token
-            }
-          }
-        
-    } catch (error) {
-        console.log('login MIA failed '+error)
-        return {
-            status: 400,
-            msg: 'Error login MIA'
-        }
-    }
-
-
-}
 
 async function refreshToken({ token, ipAddress }) {
     const refreshToken = await getRefreshToken(token);
@@ -223,14 +167,19 @@ async function resetPassword({ token, password }) {
     await account.save();
 }
 
-async function getAll() {
-    const accounts = await db.Account.find();
-    return accounts.map(x => basicDetails(x));
+async function getAll(page, size) {
+    const resp = await getAllwithPagination({ 
+    attributes :'"ID", "FIRST_NAME", "LAST_NAME", "USERNAME"', 
+    tableName: "USER_PROFILE",
+    page,
+    size
+    });
+    return resp;
 }
 
 async function getById(id) {
     const account = await getAccount(id);
-    return basicDetails(account);
+    return basicDetailsMIA(account);
 }
 
 async function create(params) {
@@ -280,10 +229,28 @@ async function _delete(id) {
 // helper functions
 
 async function getAccount(id) {
-    if (!db.isValidId(id)) throw 'Account not found';
-    const account = await db.Account.findById(id);
-    if (!account) throw 'Account not found';
-    return account;
+   // if (!db.isValidId(id)) throw 'Account not found';
+    const account = await sequelize.query( `SELECT * FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${id}`);
+    if (!account[0][0]) throw 'Account not found';
+        const roleUser = await getUserRole(id);
+        let finalAccount = account[0][0];
+        if(roleUser){
+            finalAccount = {
+                ...finalAccount,
+                ROLE: roleUser
+            }
+        }
+    return finalAccount;
+}
+
+async function getMovementsPerUser(userid,page ,size){
+    const account = await sequelize.query( `SELECT "ID" FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${userid}`);
+    if(!account[0][0]) throw 'Account not found with that id: '+userid;
+  //  const movements = await sequelize.query(`SELECT * FROM "MIA_MOVEMENT" WHERE "MIA_MOVEMENT"."USER_ID" = ${userid}`);
+ //   const resp = movements[0];
+    const finalResp = await getAllwithPagination({tableName: '"MIA_MOVEMENT"', attributes: ['"ID", "STATUS", "TOTAL_AMOUNT", "DATE_MOVEMENT"'], page, size, condition: `"MIA_MOVEMENT"."USER_ID" = ${userid}` })
+    return finalResp;
+
 }
 
 async function getRefreshToken(token) {
@@ -298,7 +265,7 @@ function hash(password) {
 
 function generateJwtToken(account) {
     // create a jwt token containing the account id that expires in 15 minutes
-    return jwt.sign({ sub: account.id, id: account.id }, config.secret, { expiresIn: '15m' });
+    return jwt.sign({ sub: account.ID, id: account.ID }, config.secret, { expiresIn: '1h' });
 }
 
 function generateRefreshToken(account, ipAddress) {
@@ -328,6 +295,11 @@ function randomTokenString() {
 function basicDetails(account) {
     const { id, title, firstName, lastName, email,genero, role, created, updated,dateOfBirth, isVerified } = account;
     return { id, title, firstName, lastName, email,genero, role, created,dateOfBirth, updated, isVerified };
+}
+
+function basicDetailsMIA(account) {
+    const { ID, USERNAME, FIRST_NAME, LAST_NAME, BIRTH_DATE, EMAIL, STATUS, ROLE  } = account;
+    return  { ID, USERNAME, FIRST_NAME, LAST_NAME, BIRTH_DATE, EMAIL, STATUS, ROLE  };
 }
 
 async function sendVerificationEmail(account, origin) {

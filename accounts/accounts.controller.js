@@ -7,6 +7,7 @@ const Role = require('_helpers/role');
 const accountService = require('./account.service');
 
 // routes
+
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
@@ -20,27 +21,30 @@ router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
+router.get('/movements/:id', authorize(), getMovementsByUserId);
+
 
 module.exports = router;
 
 function authenticateSchema(req, res, next) {
     const schema = Joi.object({
-        email: Joi.string().required(),
+        username: Joi.string().required(),
         password: Joi.string().required()
     });
     validateRequest(req, next, schema);
 }
 
 function authenticate(req, res, next) {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     const ipAddress = req.ip;
-    accountService.authenticate({ email, password, ipAddress })
+    accountService.authenticate({ username, password, ipAddress })
         .then(({ refreshToken, ...account }) => {
             setTokenCookie(res, refreshToken);
             res.json(account);
         })
         .catch(next);
 }
+
 
 function refreshToken(req, res, next) {
     const token = req.cookies.refreshToken;
@@ -153,20 +157,31 @@ function resetPassword(req, res, next) {
 }
 
 function getAll(req, res, next) {
-    accountService.getAll()
+    const { page, size } = req.query;
+    accountService.getAll(page, size)
         .then(accounts => res.json(accounts))
         .catch(next);
 }
 
 function getById(req, res, next) {
     // users can get their own account and admins can get any account
-    if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
+    {/*if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }*/}
+    if (req.params.id === req.user.id) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
     accountService.getById(req.params.id)
         .then(account => account ? res.json(account) : res.sendStatus(404))
         .catch(next);
+}
+
+function getMovementsByUserId(req, res, next){
+    const {page,size} = req.query;
+    accountService.getMovementsPerUser(req.params.id,page, size)
+        .then(account => account ? res.json(account) : res.sendStatus(404))
+        .catch(next); 
 }
 
 function createSchema(req, res, next) {

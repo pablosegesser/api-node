@@ -28,7 +28,9 @@
         "mongodb": "^3.5.7",
         "mongoose": "^5.9.25",
         "nodemailer": "^6.4.6",
+        "oracledb": "^5.5.0",
         "rootpath": "^0.1.2",
+        "sequelize": "^6.28.0",
         "swagger-ui-express": "^4.1.4",
         "yamljs": "^0.3.0"
     },

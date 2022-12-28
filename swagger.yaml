@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Node.js Sign-up and Verification API
+  title: Node.js API Back Office
   description: Node.js + MongoDB - API with email sign-up, verification, authentication and forgot password
   version: 1.0.0
 
