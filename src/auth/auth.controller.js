@@ -16,8 +16,6 @@ router.post('/verify-email', verifyEmailSchema, verifyEmail);
 router.post('/forgot-password', forgotPasswordSchema, forgotPassword);
 router.post('/validate-reset-token', validateResetTokenSchema, validateResetToken);
 router.post('/reset-password', resetPasswordSchema, resetPassword);
-router.get('/', authorize(), getAll);
-router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
@@ -152,27 +150,6 @@ function resetPasswordSchema(req, res, next) {
 function resetPassword(req, res, next) {
     accountService.resetPassword(req.body)
         .then(() => res.json({ message: 'Password reset successful, you can now login' }))
-        .catch(next);
-}
-
-function getAll(req, res, next) {
-    const { page, size } = req.query;
-    accountService.getAll(page, size)
-        .then(accounts => res.json(accounts))
-        .catch(next);
-}
-
-function getById(req, res, next) {
-    // users can get their own account and admins can get any account
-    {/*if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }*/}
-    if (req.params.id === req.user.id) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    accountService.getById(req.params.id)
-        .then(account => account ? res.json(account) : res.sendStatus(404))
         .catch(next);
 }
 

@@ -3,12 +3,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require("crypto");
 const sendEmail = require('_helpers/send-email');
-const db = require('_helpers/db');
+const db = require('_helpers/MONGODB/db');
 const Role = require('_helpers/role');
 const { USERS } = require('../../models/user/user.module');
 const { sequelize } = require('../../_helpers/db_oracle');
-const { getAllwithPagination, getUserRole } = require('../../_helpers/utils');
-const { QueryTypes } = require('sequelize');
+const { getUserRole } = require('../../_helpers/utils');
 
 
 
@@ -21,8 +20,6 @@ module.exports = {
     forgotPassword,
     validateResetToken,
     resetPassword,
-    getAll,
-    getById,
     create,
     update,
     delete: _delete,
@@ -164,21 +161,6 @@ async function resetPassword({ token, password }) {
     account.passwordReset = Date.now();
     account.resetToken = undefined;
     await account.save();
-}
-
-async function getAll(page, size) {
-    const resp = await getAllwithPagination({ 
-    attributes :'"ID", "FIRST_NAME", "LAST_NAME", "USERNAME", "STATUS", "EMAIL"', 
-    tableName: "USER_PROFILE",
-    page,
-    size
-    });
-    return resp;
-}
-
-async function getById(id) {
-    const account = await getAccount(id);
-    return basicDetailsMIA(account);
 }
 
 async function create(params) {

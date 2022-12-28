@@ -5,9 +5,9 @@ const connectionOptions = { useCreateIndex: true, useNewUrlParser: true, useUnif
 mongoose.Promise = global.Promise;
 
 module.exports = {
-    Account: require('src/auth/auth.model'),
-    RefreshToken: require('src/auth/refresh-token.model'),
-    TokenMIA: require('src/auth/token-mia.model'),
+    Account: require('_helpers/MONGODB/models/auth.model'),
+    RefreshToken: require('_helpers/MONGODB/models/refresh-token.model'),
+    TokenMIA: require('_helpers/MONGODB/models/token-mia.model'),
     isValidId
 };
 
