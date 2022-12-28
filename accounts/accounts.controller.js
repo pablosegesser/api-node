@@ -178,8 +178,8 @@ function getById(req, res, next) {
 }
 
 function getMovementsByUserId(req, res, next){
-    const {page,size} = req.query;
-    accountService.getMovementsPerUser(req.params.id,page, size)
+    const {page,size, date_to, date_from, kind_id} = req.query;
+    accountService.getMovementsPerUser(req.params.id,page, size, date_to, date_from, kind_id)
         .then(account => account ? res.json(account) : res.sendStatus(404))
         .catch(next); 
 }

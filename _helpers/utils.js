@@ -54,8 +54,8 @@ const toFormData = (data) => {
   };
 
 
-  const getTotalRows = async(tableName) =>{
-    const totalItems = await sequelize.query(`SELECT count(*) over() count FROM ${tableName}`, {
+  const getTotalRows = async(tableName, condition) =>{
+    const totalItems = await sequelize.query(`SELECT count(*) over() count FROM ${tableName} ${condition ? `WHERE ${condition}` : ''}`, {
        // replacements: {tablename: tableName},
         type: QueryTypes.SELECT,
     });
@@ -100,7 +100,7 @@ const toFormData = (data) => {
          // raw: true
         });
   
-       const totalItems = await getTotalRows(tableName)
+       const totalItems = await getTotalRows(tableName, condition)
       //  console.log(totalItems);
       //  console.log(account);
       const resp = getPagingData(account, page, size, totalItems );
@@ -108,15 +108,20 @@ const toFormData = (data) => {
       return resp
   }
 
-
-  const getPaginationResp = async({page, size, data, tableName})=>{
-    const totalItems = await getTotalRows(tableName)
-    const resp = getPagingData(data, page, size, totalItems );
-    return resp;
-
+  const insertMethod = async({tableName, attributes, values, condition}) =>{
+    const [result, metadata] = await sequelize.query(`INSERT INTO ${tableName} (${attributes}) VALUES (${values}) ${condition ? `WHERE ${condition} `: ''}`);
+    console.log('result: '+result);
+    console.log('metadata: '+metadata)
+    return result;
   }
 
+  const updateMethod = async({tableName, attributesWithValues, condition}) =>{
+    const [result, metadata] = await sequelize.query(`UPDATE ${tableName} SET ${attributesWithValues} ${condition ? `WHERE ${condition} `: ''}`);
+  }
 
+  const deleteMethod = async({tableName, condition}) =>{
+    const [result, metadata] = await sequelize.query(`DELETE FROM ${tableName} ${condition ? `WHERE ${condition} `: ''}`);
+  }
 
 
   module.exports = {

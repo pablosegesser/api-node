@@ -4,6 +4,7 @@ const db = require('_helpers/db');
 const { USERS } = require('../models/user/user.module');
 const { ROLES } = require('../models/auth/roles.model');
 const { ROLE } = require('../models/auth/role.model');
+const { getUserRole } = require('../_helpers/utils');
 
 module.exports = authorize;
 
@@ -20,24 +21,19 @@ function authorize(roles = []) {
 
         // authorize based on user role
         async (req, res, next) => {
-           // console.log(`req user: ${JSON.stringify(req.user)}`)
-            const account = await USERS.findOne({attributes:['ID'], where: {ID: req.user.id}});
-          //  console.log(account)
-          if(account){
-            console.log('account finded!')
-          }
-           // const refreshTokens = await db.RefreshToken.find({ account: account. });
-           const roleId = await ROLES.findOne({ attributes: ['ROLES_ID'], raw:true, where:{USER_ID: req.user.id}});
-         //  console.log('role id '+roleId) 
-           const roleName = await ROLE.findOne({ attributes: ["NAME"], raw:true, where: { ID: roleId.ROLES_ID}});
-           // console.log(roleName.NAME)
-            if (!account || (roles.length && !roles.includes(roleName.NAME))) {
+            
+            // get user role
+           const userRole = await getUserRole(req.user.id);
+           //get user
+           const account = await USERS.findOne({attributes:['ID'], where: {ID: req.user.id}});
+            // if account not exist or role not exists or role is not the correct throw error
+            if (!account || !userRole || (roles.length && !roles.includes(userRole))) {
                 // account no longer exists or role not authorized
                 return res.status(401).json({ message: 'Unauthorized' });
             }
 
             // authentication and authorization successful
-            req.user.role = account.role;
+           // req.user.role = account.role;
            // req.user.ownsToken = token => !!refreshTokens.find(x => x.token === token);
             next();
         }

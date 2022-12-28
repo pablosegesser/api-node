@@ -1,4 +1,3 @@
 # api-node
 
-
-nodejs express mongoDB auth JWT
+nodejs express auth JWT functional programming DB oracle
