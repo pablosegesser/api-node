@@ -1,5 +1,5 @@
 const { sequelizeMovements } = require('../../_helpers/db_oracle');
-const { getAllwithPagination : getAllMovments} = require('../../_helpers/utils');
+const { getAllwithPagination: getAllMovments } = require('../../_helpers/utils');
 
 
 
@@ -10,11 +10,11 @@ module.exports = {
 
 
 
-async function getAllMovementsByUser(userid, page, size, date_to, date_from, kind_id){
+async function getAllMovementsByUser(userid, page, size, date_to, date_from, kind_id) {
     // validate if userid exists in our database
-    const account = await sequelizeMovements.query( `SELECT "ID" FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${userid}`);
+    const account = await sequelizeMovements.query(`SELECT "ID" FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${userid}`);
     //if not exists response with error
-    if(!account[0][0]) throw 'Account not found with that id: '+userid;
+    if (!account[0][0]) throw 'Account not found with that id: ' + userid;
     //set date to
     const dateTo = date_to ? date_to : '01/01/2023 12:00:00';
     // set date from
@@ -26,7 +26,7 @@ async function getAllMovementsByUser(userid, page, size, date_to, date_from, kin
     // set attributes
     const attributes = ['"ID", "STATUS", "TOTAL_AMOUNT", "DATE_MOVEMENT", "CASHBACK_CHARGED", "CASHBACK_PENDING", "KIND_ID"'];
     // make thr response
-    const finalResp = await getAllwithPagination({tableName: '"MIA_MOVEMENT"', attributes , page, size, condition:condition });
+    const finalResp = await getAllwithPagination({ tableName: '"MIA_MOVEMENT"', attributes, page, size, condition: condition });
 
     return finalResp;
 
