@@ -1,3 +1,2 @@
-!.eslintrc.js
-android
-ios
+node_modules/
+dist/
