@@ -1,24 +1,24 @@
-const express = require('express');
-const router = express.Router();
+const express1 = require('express');
+const router = express1.Router();
 const authorize = require('_middleware/authorize')
-const usersService = require('./users.service');
+const usersService = require('./users.service.ts');
 
 // routes
-router.get('/', authorize(), getAll);
-router.get('/:id', authorize(), getById);
+router.get('/', authorize(), getAllUsers);
+router.get('/:id', authorize(), getUserById);
 
 module.exports = router;
 
 
 
-function getAll(req, res, next) {
+function getAllUsers(req, res, next) {
     const { page, size } = req.query;
     usersService.getAll(page, size)
         .then(accounts => res.json(accounts))
         .catch(next);
 }
 
-function getById(req, res, next) {
+function getUserById(req, res, next) {
     // users can get their own account and admins can get any account
     {/*if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
         return res.status(401).json({ message: 'Unauthorized' });

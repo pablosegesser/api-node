@@ -12,12 +12,11 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // allow cors requests from any origin and with credentials
-app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
-
+app.use(cors({ origin: (origin: any, callback: (arg0: null, arg1: boolean) => any) => callback(null, true), credentials: true }));
 // api routes
-app.use('/auth', require('./src/auth/auth.controller'));
-app.use('/movements', require('./src/movements/movements.controller'));
-app.use('/users', require('./src/users/users.controller'));
+app.use('/auth', require('../src/auth/auth.controller'));
+app.use('/movements', require('../src/movements/movements.controller.ts'));
+app.use('/users', require('../src/users/users.controller.ts'));
 
 // swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));

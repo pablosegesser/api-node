@@ -1,18 +1,18 @@
-const { sequelize } = require('../../_helpers/db_oracle');
-const { getAllwithPagination} = require('../../_helpers/utils');
+const { sequelizeMovements } = require('../../_helpers/db_oracle');
+const { getAllwithPagination : getAllMovments} = require('../../_helpers/utils');
 
 
 
 
 module.exports = {
-    getMovementsPerUser
+    getAllMovementsByUser
 };
 
 
 
-async function getMovementsPerUser(userid, page, size, date_to, date_from, kind_id){
+async function getAllMovementsByUser(userid, page, size, date_to, date_from, kind_id){
     // validate if userid exists in our database
-    const account = await sequelize.query( `SELECT "ID" FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${userid}`);
+    const account = await sequelizeMovements.query( `SELECT "ID" FROM "USER_PROFILE" WHERE "USER_PROFILE"."ID" = ${userid}`);
     //if not exists response with error
     if(!account[0][0]) throw 'Account not found with that id: '+userid;
     //set date to

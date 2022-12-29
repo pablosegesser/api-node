@@ -37,7 +37,7 @@ async function authenticate({ username, password, ipAddress }) {
     if (!accountMIA || !bcrypt.compareSync(password, accountMIA.PASSWORD)) {
         throw 'Email or password is incorrect';
     }
-    console.log(accountMIA.ID)
+   // console.log(accountMIA.ID)
     // authentication successful so generate jwt and refresh tokens
     const jwtToken = generateJwtToken(accountMIA);
   //  const refreshToken = generateRefreshToken(accountMIA.ID, ipAddress);
@@ -50,7 +50,7 @@ async function authenticate({ username, password, ipAddress }) {
     return {
         ...basicDetailsMIA(accountMIA),
         jwtToken,
-        refreshToken: refreshToken.token,
+      //  refreshToken: refreshToken.token,
     };
 }
 
